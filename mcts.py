@@ -45,9 +45,12 @@ class mcts():
             self.limitType = 'iterations'
         self.explorationConstant = explorationConstant
         self.rollout = rolloutPolicy
+        self.root = None
 
-    def search(self, initialState):
-        self.root = treeNode(initialState, None)
+    def search(self, initialState, forceReset = False):
+        if forceReset or self.root == None or self.root.state != initialState:
+            print('Resetting root node')
+            self.root = treeNode(initialState, None)
 
         if self.limitType == 'time':
             timeLimit = time.time() + self.timeLimit / 1000
@@ -57,8 +60,30 @@ class mcts():
             for i in range(self.searchLimit):
                 self.executeRound()
 
+        # return self.bestPlayout()
+
         bestChild = self.getBestChild(self.root, 0)
         return self.getAction(self.root, bestChild)
+
+    def bestPlayout(self):
+        node = self.root
+
+        nodes = [node]
+        states = [self.root.state]
+        actions = []
+
+        while not node.isTerminal:
+            if(len(node.children) == 0):
+                break
+            nextNode = self.getBestChild(node, 0)
+            actions.append(self.getAction(node, nextNode))
+            states.append(nextNode.state)
+            nodes.append(nextNode)
+
+            node = nextNode
+
+        return states, actions, nodes
+
 
     def executeRound(self):
         node = self.selectNode(self.root)
@@ -102,6 +127,9 @@ class mcts():
                 bestNodes = [child]
             elif nodeValue == bestValue:
                 bestNodes.append(child)
+
+        if explorationValue == -1:
+            return bestNodes[0] 
         return random.choice(bestNodes)
 
     def getAction(self, root, bestChild):
