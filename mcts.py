@@ -2,7 +2,7 @@ from __future__ import division
 
 import time
 import math
-import numpy as np
+import random
 
 def randomPolicy(state, rngState):
     while not state.isTerminal():
@@ -46,7 +46,7 @@ class mcts():
         self.rollout = rolloutPolicy
         self.root = None
 
-        self.rngState = np.random.RandomState(seed)
+        self.rngState = random.Random(seed)
 
     def search(self, initialState, forceReset = False):
         if forceReset or self.root == None or self.root.state != initialState:
