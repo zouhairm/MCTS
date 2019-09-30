@@ -2,13 +2,12 @@ from __future__ import division
 
 import time
 import math
-import random
+import numpy as np
 
-
-def randomPolicy(state):
+def randomPolicy(state, rngState):
     while not state.isTerminal():
         try:
-            action = random.choice(state.getPossibleActions())
+            action = rngState.choice(state.getPossibleActions())
         except IndexError:
             raise Exception("Non-terminal state has no possible actions: " + str(state))
         state = state.takeAction(action)
@@ -28,7 +27,7 @@ class treeNode():
 
 class mcts():
     def __init__(self, timeLimit=None, iterationLimit=None, explorationConstant=1 / math.sqrt(2),
-                 rolloutPolicy=randomPolicy):
+                 rolloutPolicy=randomPolicy, seed = 0):
         if timeLimit != None:
             if iterationLimit != None:
                 raise ValueError("Cannot have both a time limit and an iteration limit")
@@ -46,6 +45,8 @@ class mcts():
         self.explorationConstant = explorationConstant
         self.rollout = rolloutPolicy
         self.root = None
+
+        self.rngState = np.random.RandomState(seed)
 
     def search(self, initialState, forceReset = False):
         if forceReset or self.root == None or self.root.state != initialState:
@@ -87,7 +88,7 @@ class mcts():
 
     def executeRound(self):
         node = self.selectNode(self.root)
-        reward = self.rollout(node.state)
+        reward = self.rollout(node.state, self.rngState)
         self.backpropogate(node, reward)
 
     def selectNode(self, node):
@@ -130,7 +131,7 @@ class mcts():
 
         if explorationValue == -1:
             return bestNodes[0] 
-        return random.choice(bestNodes)
+        return self.rngState.choice(bestNodes)
 
     def getAction(self, root, bestChild):
         for action, node in root.children.items():
